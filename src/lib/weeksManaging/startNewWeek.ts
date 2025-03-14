@@ -1,8 +1,10 @@
 import type { WeeklyReport } from "./types";
 import generateUUID from "$lib/utils/generateUUID";
 import createNewWeek from "$lib/database/createNewWeek";
+import { clearDatabase } from "$lib/database/clearDatabase";
 
 export async function startNewWeek(name: string = generateWeekName()): Promise<void> {
+    await clearDatabase();
     return createNewWeek(createWeeklyReport(name));
 }
 
