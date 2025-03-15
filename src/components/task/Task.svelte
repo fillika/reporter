@@ -1,13 +1,16 @@
 <script lang="ts">
     import type { Task } from "$lib/weeksManaging/types";
     import Modal from "../modals/Modal.svelte";
+    import EditTaskForm from "../forms/EditTaskForm.svelte";
+    import Button from "../ui/Button.svelte";
+    import saveTask from "$lib/database/methods/saveTask";
 
-    let isOpen = false;
-
+    let isOpen = $state(false);
+    const { handleDeleteTask, weekId, task } = $props();
+    
     function editTask(event: Event) {
         event.preventDefault();
         isOpen = true;
-        console.debug("Edit task");
     }
 
     function handleKeydown(event: KeyboardEvent) {
@@ -16,8 +19,8 @@
         }
     }
 
-    function onSuccessEdit(data: Task) {
-        console.debug("Task edited", data);
+    async function onSuccessEdit(data: Task) {
+        await saveTask(weekId, data);
         isOpen = false;
     }
 
@@ -26,26 +29,35 @@
         console.debug("Task editing canceled");
     }
 
-    function onDeleteTask() {
+    async function onDelete() {
+        const isDeleted = await handleDeleteTask(weekId, task.id);
+        if (!isDeleted) {
+            alert("Не удалось удалить задачу");
+            return;
+        }
         isOpen = false;
-        console.debug("Task deleted");
     }
 
-    export let task: Task;
 </script>
 
-<div class="task">
-    <div class="task-link" on:click={editTask} on:keydown={handleKeydown} role="button" tabindex="0">
+<div class="task" onclick={editTask} onkeydown={handleKeydown} role="button" tabindex="0">
+    <div class="task-link">
         <div class="task-title">{task.title}</div>
         <div class="task-details">
             <span class="task-completion">{task.completionPercentage}%</span>
-            <span class="task-status">{task.isCompleted ? "✅" : "❌"}</span>
+            <span class="task-status">{task.isCompleted ? "✅" : ""}</span>
         </div>
     </div>
 </div>
 
-<Modal isOpen={isOpen} title="Task details" closeHandler={onCanceledEdit}>
-    <p>Task details will be here</p>
+<Modal {isOpen} title="Редактировать задачу" closeHandler={onCanceledEdit}>
+    <EditTaskForm {task} successHandler={onSuccessEdit} cancelHandler={onCanceledEdit}>
+        <div slot="action-buttons" let:handleSubmit let:handleCancel>
+            <Button text="Принять" on:click={handleSubmit} />
+            <Button text="Отмена" on:click={handleCancel} />
+            <Button text="Удалить" on:click={onDelete} />
+        </div>
+    </EditTaskForm>
 </Modal>
 
 <style>

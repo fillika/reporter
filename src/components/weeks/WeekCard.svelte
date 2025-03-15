@@ -2,12 +2,13 @@
     import saveTask from "$lib/database/methods/saveTask";
     import type { Task, WeekReport } from "$lib/weeksManaging/types";
     import Button from "../ui/Button.svelte";
-    import CreateNewTask from "../forms/NewTaskForm.svelte";
     import Modal from "../modals/Modal.svelte";
     import TaskList from "../task/TaskList.svelte";
     import WeekTitle from "./WeekTitle.svelte";
     import { onMount } from "svelte";
+    import NewTaskForm from "../forms/EditTaskForm.svelte";
     import { goto } from "$app/navigation";
+    import generateUUID from "$lib/utils/generateUUID";
 
     let isLoading = true;
     export let report: WeekReport;
@@ -36,14 +37,21 @@
         alert("// todo implement");
     }
 
+    function createTask(): Task {
+        return {
+            id: generateUUID(),
+            title: "",
+            notes: "",
+            createdAt: Date.now(),
+            startTime: Date.now(),
+            completionPercentage: 0,
+            isCompleted: false,
+        };
+    }
+
     onMount(async () => {
-        // todo: get weeks from server
-        // const report = await getWeek();
         isLoading = false;
-        // weekName = reportData.name;
-        // tasks = reportData.tasks;
     });
-    // todo: show all weeks
 </script>
 
 <div class="container">
@@ -52,7 +60,7 @@
     {#if isLoading}
         <p class="loading">Данные загружаются...</p>
     {:else}
-        <TaskList tasks={report.tasks} />
+        <TaskList weekId={report.id} tasks={report.tasks} />
     {/if}
 
     <div class="actions">
@@ -61,7 +69,16 @@
     </div>
 
     <Modal isOpen={isModalOpen} title="Создать задачу" closeHandler={closeModal}>
-        <CreateNewTask successHandler={(data) => createNewTask(report.id, data)} cancelHandler={closeModal} />
+        <NewTaskForm
+            task={createTask()}
+            successHandler={(data) => createNewTask(report.id, data)}
+            cancelHandler={closeModal}
+        >
+            <div slot="action-buttons" let:handleSubmit let:handleCancel>
+                <Button text="Создать" on:click={handleSubmit} />
+                <Button text="Отмена" on:click={handleCancel} />
+            </div>
+        </NewTaskForm>
     </Modal>
 </div>
 

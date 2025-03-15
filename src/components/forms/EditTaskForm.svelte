@@ -1,54 +1,49 @@
 <script lang="ts">
-    import Button from "../ui/Button.svelte";
     import type { Task } from "$lib/weeksManaging/types";
-    import generateUUID from "$lib/utils/generateUUID";
+    import { formatDateToDateTimeLocal } from "$lib/utils/formatDate";
 
-    let title = "";
-    let notes = "";
-    let startTime = 0;
-    let completionPercentage = 0;
-    let isCompleted = false;
+    export let task: Task;
 
     export let successHandler = (data: Task) => {};
     export let cancelHandler = () => {};
 
     function onTitleChanged(e: Event) {
-        title = (e.target as HTMLInputElement).value;
+        task.title = (e.target as HTMLInputElement).value;
     }
 
     function onDateChanged(e: Event) {
-        startTime = new Date((e.target as HTMLInputElement).value).getTime();
+        task.startTime = new Date((e.target as HTMLInputElement).value).getTime();
     }
 
     function onCompletionPercentageChanged(e: Event) {
         const parsed = parseInt((e.target as HTMLInputElement).value);
         const result = isNaN(parsed) ? 0 : Math.min(100, Math.max(0, parsed));
         (e.target as HTMLInputElement).value = result.toString();
-        completionPercentage = result;
+        task.completionPercentage = result;
     }
 
     function onIsCompletedChanged(e: Event) {
-        isCompleted = (e.target as HTMLInputElement).checked;
+        task.isCompleted = (e.target as HTMLInputElement).checked;
     }
 
     function onNotesChanged(e: Event) {
-        notes = (e.target as HTMLTextAreaElement).value;
+        task.notes = (e.target as HTMLTextAreaElement).value;
     }
 
     function onSuccess() {
-        if (!title) {
+        if (!task.title) {
             alert("Введите название задачи");
             return;
         }
 
         successHandler({
-            id: generateUUID(),
-            title,
-            notes,
-            createdAt: Date.now(),
-            startTime,
-            completionPercentage,
-            isCompleted,
+            id: task.id,
+            title: task.title,
+            notes: task.notes,
+            createdAt: task.createdAt,
+            startTime: task.startTime,
+            completionPercentage: task.completionPercentage,
+            isCompleted: task.isCompleted,
         });
     }
 </script>
@@ -56,11 +51,16 @@
 <div class="form-container">
     <div class="form-group">
         <label for="title">Название задачи</label>
-        <input type="text" id="title" placeholder="Название задачи" on:input={onTitleChanged} />
+        <input type="text" id="title" placeholder="Название задачи" value={task.title} on:input={onTitleChanged} />
     </div>
     <div class="form-group">
         <label for="startTime">Дата и время начала</label>
-        <input type="datetime-local" id="startTime" on:input={onDateChanged} />
+        <input
+            type="datetime-local"
+            id="startTime"
+            value={formatDateToDateTimeLocal(new Date(task.createdAt))}
+            on:input={onDateChanged}
+        />
     </div>
     <div class="form-group">
         <label for="completionPercentage">Процент выполнения</label>
@@ -70,21 +70,20 @@
             min="0"
             max="100"
             step="1"
-            value="0"
+            value={task.completionPercentage}
             on:input={onCompletionPercentageChanged}
         />
     </div>
     <div class="form-group">
         <label for="isCompleted">Задача завершена?</label>
-        <input type="checkbox" id="isCompleted" bind:checked={isCompleted} on:change={onIsCompletedChanged} />
+        <input type="checkbox" id="isCompleted" bind:checked={task.isCompleted} on:change={onIsCompletedChanged} />
     </div>
     <div class="form-group">
         <label for="notes">Заметки</label>
-        <textarea id="notes" placeholder="Заметки" on:input={onNotesChanged}></textarea>
+        <textarea id="notes" placeholder="Заметки" value={task.notes} on:input={onNotesChanged}></textarea>
     </div>
     <div class="form-actions">
-        <Button text="Создать" on:click={onSuccess} />
-        <Button text="Отмена" on:click={cancelHandler} />
+        <slot name="action-buttons" handleSubmit={onSuccess} handleCancel={cancelHandler}></slot>
     </div>
 </div>
 
