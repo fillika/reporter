@@ -5,7 +5,7 @@ export interface IDatabase<T, W> {
     deleteTask(weekId: string, key: string): Promise<boolean>;
 
     getWeek(key: string): Promise<W | undefined>;
-    // getWeeks(): Promise<{ [key: string]: W }>;
+    getWeeks(): Promise<{ [key: string]: W }>;
     saveWeek(key: string, value: W): Promise<boolean>;
     deleteWeek(key: string): Promise<boolean>;
 }

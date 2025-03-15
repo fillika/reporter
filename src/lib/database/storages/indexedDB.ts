@@ -7,7 +7,7 @@ type Args = {
     tasksStorageKey: string;
 };
 
-class IndexedDBStorage<T, W> implements IDatabase<T, W> {
+class IndexedDBStorage<T, W extends { id: string }> implements IDatabase<T, W> {
     private db!: IDBDatabase;
     private dbName: string;
     private version: number;
@@ -111,6 +111,24 @@ class IndexedDBStorage<T, W> implements IDatabase<T, W> {
             };
             request.onerror = () => {
                 reject(undefined);
+            };
+        });
+    }
+    
+    async getWeeks(): Promise<{ [key: string]: W }> {
+        const transaction = this.db.transaction(this.weeksStorageKey, "readonly");
+        const store = transaction.objectStore(this.weeksStorageKey);
+        const request = store.getAll();
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+                const weeks = request.result.reduce((acc: { [key: string]: W }, week: W) => {
+                    acc[week.id] = week;
+                    return acc;
+                }, {});
+                resolve(weeks);
+            };
+            request.onerror = () => {
+                reject({});
             };
         });
     }

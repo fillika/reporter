@@ -7,6 +7,7 @@
     import TaskList from "../task/TaskList.svelte";
     import WeekTitle from "./WeekTitle.svelte";
     import { onMount } from "svelte";
+    import { goto } from "$app/navigation";
 
     let isLoading = true;
     export let report: WeekReport;
@@ -46,6 +47,7 @@
 </script>
 
 <div class="container">
+    <Button text="Назад" on:click={() => goto("/")} />
     <WeekTitle title={report.name} />
     {#if isLoading}
         <p class="loading">Данные загружаются...</p>

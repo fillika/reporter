@@ -1,4 +1,5 @@
 import type { IDatabase } from "./types";
+import CONSTANTS from "$lib/utils/constants";
 
 class LocalStorageDB<T, W> implements IDatabase<T, W> {
     private db: Storage;
@@ -47,19 +48,45 @@ class LocalStorageDB<T, W> implements IDatabase<T, W> {
     }
 
     async getWeek(key: string) {
-        const value = this.db.getItem(key);
-        if (value) return JSON.parse(value);
+        const dbData = this.getDb();
+        if (!dbData) return undefined;
+
+        const value = JSON.parse(dbData)[key];
+        if (value) return value;
         return undefined;
     }
 
+    async getWeeks(): Promise<{ [key: string]: W }> {
+        const dbData = this.getDb();
+        if (!dbData) return {};
+        return JSON.parse(dbData);
+    }
+
     async saveWeek(key: string, value: W) {
-        this.db.setItem(key, JSON.stringify(value));
+        const dbData = this.getDb();
+        if (!dbData) {
+            this.db.setItem(CONSTANTS.DB_NAME, JSON.stringify({ [key]: value }));
+            return true;
+        };
+
+        const db = JSON.parse(dbData);
+        db[key] = value;
+        this.db.setItem(CONSTANTS.DB_NAME, JSON.stringify(db));
         return true;
     }
 
     async deleteWeek(key: string) {
-        this.db.removeItem(key);
+        const dbData = this.getDb();
+        if (!dbData) return true;
+
+        const db = JSON.parse(dbData);
+        delete db[key];
+        this.db.setItem(CONSTANTS.DB_NAME, JSON.stringify(db));
         return true;
+    }
+
+    private getDb() {
+        return this.db.getItem(CONSTANTS.DB_NAME);
     }
 }
 

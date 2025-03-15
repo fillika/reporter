@@ -2,7 +2,9 @@ import type { WeekReport } from "./types";
 import generateUUID from "$lib/utils/generateUUID";
 import createNewWeek from "$lib/database/methods/createNewWeek";
 
-export async function startNewWeek(name: string = generateWeekName()): Promise<WeekReport> {
+export async function startNewWeek(name: string): Promise<WeekReport> {
+    if (!name)
+        name = generateWeekName();
     const report = createWeekReport(name);
     await createNewWeek(createWeekReport(name));
     return report;

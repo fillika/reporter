@@ -26,6 +26,10 @@ class DBManager<T, W> implements IDatabase<T, W> {
         return this.db.getWeek(key);
     }
 
+    async getWeeks() {
+        return this.db.getWeeks();
+    }
+
     async saveWeek(key: string, value: W) {
         return this.db.saveWeek(key, value);
     }
