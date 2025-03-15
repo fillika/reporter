@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Task } from "$lib/weeksManaging/types";
-    import Modal from "./Modal.svelte";
+    import Modal from "../modals/Modal.svelte";
 
     let isOpen = false;
 

@@ -1,11 +1,11 @@
-import type { WeeklyReport } from "./types";
+import type { WeekReport } from "./types";
 import generateUUID from "$lib/utils/generateUUID";
-import createNewWeek from "$lib/database/createNewWeek";
-import { clearDatabase } from "$lib/database/clearDatabase";
+import createNewWeek from "$lib/database/methods/createNewWeek";
 
-export async function startNewWeek(name: string = generateWeekName()): Promise<void> {
-    await clearDatabase();
-    return createNewWeek(createWeeklyReport(name));
+export async function startNewWeek(name: string = generateWeekName()): Promise<WeekReport> {
+    const report = createWeekReport(name);
+    await createNewWeek(createWeekReport(name));
+    return report;
 }
 
 function generateWeekName(): string {
@@ -22,12 +22,11 @@ function getWeekNumber(date: Date): number {
     return weekNumber;
 }
 
-function createWeeklyReport(name: string): WeeklyReport {
+function createWeekReport(name: string): WeekReport {
     return {
-        [generateUUID()]: {
-            name,
-            createdAt: Date.now(),
-            tasks: {},
-        },
+        id: generateUUID(),
+        name,
+        createdAt: Date.now(),
+        tasks: {},
     };
 }

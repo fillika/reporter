@@ -13,10 +13,9 @@ export interface TaskCollection {
     [taskId: string]: Task;
 }
 
-export interface WeeklyReport {
-    [reportId: string]: {
-        name: string;
-        createdAt: number;
-        tasks: TaskCollection,
-    };
+export interface WeekReport {
+    id: string;
+    name: string;
+    createdAt: number;
+    tasks: TaskCollection;
 }
