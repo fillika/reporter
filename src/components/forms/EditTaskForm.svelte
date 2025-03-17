@@ -11,6 +11,10 @@
         task.title = (e.target as HTMLInputElement).value;
     }
 
+    function onIssueChanged(e: Event) {
+        task.issue = (e.target as HTMLInputElement).value;
+    }
+
     function onDateChanged(e: Event) {
         task.startTime = new Date((e.target as HTMLInputElement).value).getTime();
     }
@@ -36,15 +40,7 @@
             return;
         }
 
-        successHandler({
-            id: task.id,
-            title: task.title,
-            notes: task.notes,
-            createdAt: task.createdAt,
-            startTime: task.startTime,
-            completionPercentage: task.completionPercentage,
-            isCompleted: task.isCompleted,
-        });
+        successHandler(task);
     }
 </script>
 
@@ -52,6 +48,10 @@
     <div class="form-group">
         <label for="title">Название задачи</label>
         <input type="text" id="title" placeholder="Название задачи" value={task.title} on:input={onTitleChanged} />
+    </div>
+    <div class="form-group">
+        <label for="issue">Номер issue</label>
+        <input type="text" id="issue" placeholder="Номер issue" value={task.issue} on:input={onIssueChanged} />
     </div>
     <div class="form-group">
         <label for="startTime">Дата и время начала</label>

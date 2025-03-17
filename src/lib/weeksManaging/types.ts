@@ -2,6 +2,7 @@ export interface Task {
     id: string;
     title: string;
     notes: string;
+    issue?: string;
     createdAt: number;
     startTime: number;
     endTime?: number | undefined;
