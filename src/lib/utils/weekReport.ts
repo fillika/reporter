@@ -11,9 +11,14 @@ export function prepareWeekReport(report: WeekReport) {
 
         // result += `[Задача создана ${new Date(task.createdAt).toLocaleString()}]\n`;
         result += `[Задача завершена на ${task.completionPercentage}%]\n`;
+        if (task.issue)
+            result += `[issue/${task.issue}]\n`;
 
+        result += "\n";
         result += task.notes;
         result += "\n\n";
+        result += "----------------------------------";
+        result += "\n";
     }
 
     return result;
