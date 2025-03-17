@@ -7,7 +7,7 @@
     import { getContext, onMount } from "svelte";
 
     let isOpen = $state(false);
-    const { handleDeleteTask, task } = $props();
+    let { handleDeleteTask, task } = $props();
     let db: DBManager<Task, WeekReport>;
 
     function editTask(event: Event) {
@@ -22,7 +22,9 @@
     }
 
     async function onSuccessEdit(data: Task) {
-        await db.updateTask(data);
+        const result = await db.updateTask(data);
+        if (result)
+            task = data;
         isOpen = false;
     }
 

@@ -18,6 +18,7 @@
     let isModalOpen = false;
     let isReportModalOpen = false;
     let db: DBManager<Task, WeekReport>;
+    let localTasks: TaskCollection = {};
 
     async function createNewTask(data: Task) {
         const isSuccess = await db.addTask(data);
@@ -37,7 +38,8 @@
         isModalOpen = false;
     }
 
-    function createReport() {
+    async function createReport() {
+        localTasks = await db.getTasks(week.id);
         isReportModalOpen = true;
     }
 
@@ -88,7 +90,7 @@
     </Modal>
 
     <Modal isOpen={isReportModalOpen} title="Отчет" closeHandler={closeReportModal}>
-        <ReportForm {week} bind:tasks onSuccess={closeReportModal} onCancel={closeReportModal}>
+        <ReportForm {week} tasks={localTasks} onSuccess={closeReportModal} onCancel={closeReportModal}>
             <div slot="action-buttons" let:handleSubmit let:handleCancel>
                 <Button text="Скопировать" on:click={handleSubmit} />
                 <Button text="Отмена" on:click={handleCancel} />
