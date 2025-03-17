@@ -1,17 +1,19 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import type { WeekReport } from "../lib/weeksManaging/types";
     import Button from "../components/ui/Button.svelte";
     import Modal from "../components/modals/Modal.svelte";
     import NewWeekForm from "../components/forms/NewWeekForm.svelte";
-    import { startNewWeek } from "$lib/weeksManaging/startNewWeek";
     import WeekList from "../components/weeks/WeekList.svelte";
-    import getWeeks from "$lib/database/methods/getWeeks";
     import Container from "../components/ui/Container.svelte";
+    import type DBManager from "$lib/database/manager/manager";
+    import generateUUID from "$lib/utils/generateUUID";
+    import generateWeekName from "$lib/utils/generateWeekName";
 
     let weeks: { [key: string]: WeekReport } = {};
     let isLoading = true;
     let isOpen = false;
+    let db: DBManager<Task, WeekReport>;
 
     function onCloseModal() {
         isOpen = false;
@@ -22,14 +24,22 @@
     }
 
     async function createWeek(name: string) {
-        const report = await startNewWeek(name);
-        weeks[report.id] = report;
+        if (name === "") name = generateWeekName();
+
+        const week = {
+            id: generateUUID(),
+            name,
+            createdAt: Date.now(),
+        };
+        await db.addWeek(week);
+        weeks = await db.getWeeks();
         onCloseModal();
     }
 
     onMount(async () => {
-        // todo how to optimize this?
-        weeks = await getWeeks();
+        db = getContext("db");
+
+        weeks = await db.getWeeks();
         isLoading = false;
     });
 </script>

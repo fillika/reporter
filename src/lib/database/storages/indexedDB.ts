@@ -1,161 +1,208 @@
 import type { IDatabase } from "./types";
+import CONSTANTS from "$lib/utils/constants";
 
-type Args = {
-    dbName: string;
-    version: number;
-    weeksStorageKey: string;
-    tasksStorageKey: string;
-};
+const {
+    DB_NAME,
+    DB_VERSION,
+    INDEXES: { WEEKS, TASKS },
+} = CONSTANTS;
 
-class IndexedDBStorage<T, W extends { id: string }> implements IDatabase<T, W> {
+class IndexedDBStorage<T extends { id: string }, W extends { id: string }> implements IDatabase<T, W> {
     private db!: IDBDatabase;
-    private dbName: string;
-    private version: number;
-    private weeksStorageKey: string;
-    private tasksStorageKey: string;
 
-    constructor({ dbName, version, weeksStorageKey, tasksStorageKey }: Args) {
-        this.dbName = dbName;
-        this.version = version;
-        this.weeksStorageKey = weeksStorageKey;
-        this.tasksStorageKey = tasksStorageKey;
+    constructor() {
+        this.db;
+    }
 
-        const request = window.indexedDB.open(this.dbName, this.version);
-        request.onsuccess = (event: any) => {
-            this.db = event.target.result;
-        };
-        request.onerror = () => {
-            throw new Error("Error opening database");
-        };
-        request.onupgradeneeded = (event) => {
-            const db = request.result;
-            if (!db.objectStoreNames.contains(this.weeksStorageKey)) {
-                db.createObjectStore(this.weeksStorageKey, { keyPath: "id" });
-            }
-            if (!db.objectStoreNames.contains(this.tasksStorageKey)) {
-                const taskStore = db.createObjectStore(this.tasksStorageKey, { keyPath: "id" });
+    init(): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+
+            request.onsuccess = (event: any) => {
+                this.db = event.target.result;
+                resolve(true);
+            };
+            request.onerror = () => {
+                throw new Error("Error opening database");
+            };
+            request.onupgradeneeded = (event) => {
+                this.db = (event.target as any).result;
+
+                // Создаю хранилище недель
+                const weekStore = this.db.createObjectStore(WEEKS, { keyPath: "id" });
+                weekStore.createIndex("name", "name", { unique: false });
+                weekStore.createIndex("createdAt", "createdAt", { unique: false });
+
+                const taskStore = this.db.createObjectStore(TASKS, { keyPath: "id" });
                 taskStore.createIndex("weekId", "weekId", { unique: false });
-            }
-        };
-    }
-
-    async getTask(weekId: string, key: string): Promise<T | undefined> {
-        const transaction = this.db.transaction(this.tasksStorageKey, "readonly");
-        const store = transaction.objectStore(this.tasksStorageKey);
-        const index = store.index("weekId");
-        const request = index.get(weekId);
-        return new Promise((resolve, reject) => {
-            request.onsuccess = () => {
-                const task = request.result.tasks[key];
-                resolve(task);
-            };
-            request.onerror = () => {
-                reject(undefined);
+                taskStore.createIndex("title", "title", { unique: false });
+                taskStore.createIndex("notes", "notes", { unique: false });
+                taskStore.createIndex("issue", "issue", { unique: false });
+                taskStore.createIndex("createdAt", "createdAt", { unique: false });
+                taskStore.createIndex("startTime", "startTime", { unique: false });
+                taskStore.createIndex("endTime", "endTime", { unique: false });
+                taskStore.createIndex("completionPercentage", "completionPercentage", { unique: false });
+                taskStore.createIndex("isCompleted", "isCompleted", { unique: false });
             };
         });
     }
 
-    async saveTask(weekId: string, key: string, value: T): Promise<boolean> {
-        const transaction = this.db.transaction(this.tasksStorageKey, "readwrite");
-        const store = transaction.objectStore(this.tasksStorageKey);
-        const index = store.index("weekId");
-        const request = index.get(weekId);
+    async addTask(task: T): Promise<boolean> {
+        const transaction = this.db.transaction(TASKS, "readwrite");
+        const tasks = transaction.objectStore(TASKS);
+
         return new Promise((resolve, reject) => {
-            request.onsuccess = () => {
-                const week = request.result;
-                week.tasks[key] = value;
-                const updateRequest = store.put(week);
-                updateRequest.onsuccess = () => {
-                    resolve(true);
-                };
-                updateRequest.onerror = () => {
-                    reject(false);
-                };
+            const request = tasks.add(task);
+            request.onsuccess = function () {
+                resolve(true);
             };
-            request.onerror = () => {
+            request.onerror = function () {
                 reject(false);
             };
         });
     }
 
-    async deleteTask(weekId: string, key: string): Promise<boolean> {
-        const transaction = this.db.transaction(this.tasksStorageKey, "readwrite");
-        const store = transaction.objectStore(this.tasksStorageKey);
-        const index = store.index("weekId");
-        const request = index.get(weekId);
-        return new Promise((resolve, reject) => {
-            request.onsuccess = () => {
-                const week = request.result;
-                delete week.tasks[key];
-                const updateRequest = store.put(week);
-                updateRequest.onsuccess = () => {
-                    resolve(true);
-                };
-                updateRequest.onerror = () => {
-                    reject(false);
-                };
-            };
-            request.onerror = () => {
-                reject(false);
-            };
-        });
-    }
+    async getTask(taskId: string): Promise<T | undefined> {
+        const transaction = this.db.transaction(TASKS, "readonly");
+        const tasks = transaction.objectStore(TASKS);
 
-    async getWeek(key: string): Promise<W | undefined> {
-        const transaction = this.db.transaction(this.weeksStorageKey, "readonly");
-        const store = transaction.objectStore(this.weeksStorageKey);
-        const request = store.get(key);
         return new Promise((resolve, reject) => {
-            request.onsuccess = () => {
+            const request = tasks.get(taskId);
+            request.onsuccess = function () {
                 resolve(request.result);
             };
-            request.onerror = () => {
+            request.onerror = function () {
                 reject(undefined);
             };
         });
     }
-    
-    async getWeeks(): Promise<{ [key: string]: W }> {
-        const transaction = this.db.transaction(this.weeksStorageKey, "readonly");
-        const store = transaction.objectStore(this.weeksStorageKey);
-        const request = store.getAll();
+
+    async getTasks(weekId: string): Promise<{ [key: string]: T }> {
+        const transaction = this.db.transaction(TASKS, "readonly");
+        const tasks = transaction.objectStore(TASKS);
+
         return new Promise((resolve, reject) => {
-            request.onsuccess = () => {
-                const weeks = request.result.reduce((acc: { [key: string]: W }, week: W) => {
-                    acc[week.id] = week;
+            const index = tasks.index("weekId");
+            const request = index.getAll(weekId);
+            request.onsuccess = function () {
+                const resultArray = request.result as T[];
+                const resultObject = resultArray.reduce((acc, item) => {
+                    acc[item.id] = item;
                     return acc;
-                }, {});
-                resolve(weeks);
+                }, {} as { [key: string]: T });
+                resolve(resultObject);
             };
-            request.onerror = () => {
+            request.onerror = function () {
                 reject({});
             };
         });
     }
 
-    async saveWeek(key: string, value: W): Promise<boolean> {
-        const transaction = this.db.transaction(this.weeksStorageKey, "readwrite");
-        const store = transaction.objectStore(this.weeksStorageKey);
-        const request = store.put(value);
+    async updateTask(task: T): Promise<boolean> {
+        const transaction = this.db.transaction(TASKS, "readwrite");
+        const tasks = transaction.objectStore(TASKS);
+
         return new Promise((resolve, reject) => {
-            request.onsuccess = () => {
+            const request = tasks.put(task);
+            request.onsuccess = function () {
                 resolve(true);
             };
-            request.onerror = () => {
+            request.onerror = function () {
                 reject(false);
             };
         });
     }
 
-    async deleteWeek(key: string): Promise<boolean> {
-        const transaction = this.db.transaction(this.weeksStorageKey, "readwrite");
-        const store = transaction.objectStore(this.weeksStorageKey);
-        const request = store.delete(key);
+    async deleteTask(taskId: string): Promise<boolean> {
+        const transaction = this.db.transaction(TASKS, "readwrite");
+        const tasks = transaction.objectStore(TASKS);
+
         return new Promise((resolve, reject) => {
-            request.onsuccess = () => {
+            const request = tasks.delete(taskId);
+            request.onsuccess = function () {
                 resolve(true);
             };
-            request.onerror = () => {
+            request.onerror = function () {
+                reject(false);
+            };
+        });
+    }
+
+    async addWeek(week: W): Promise<boolean> {
+        const transaction = this.db.transaction(WEEKS, "readwrite");
+        const weeks = transaction.objectStore(WEEKS);
+
+        return new Promise((resolve, reject) => {
+            const request = weeks.add(week);
+            request.onsuccess = function () {
+                resolve(true);
+            };
+            request.onerror = function () {
+                reject(false);
+            };
+        });
+    }
+
+    async getWeek(weekId: string): Promise<W | undefined> {
+        const transaction = this.db.transaction(WEEKS, "readonly");
+        const weeks = transaction.objectStore(WEEKS);
+
+        return new Promise((resolve, reject) => {
+            const request = weeks.get(weekId);
+            request.onsuccess = function () {
+                resolve(request.result);
+            };
+            request.onerror = function () {
+                reject(undefined);
+            };
+        });
+    }
+
+    async getWeeks(): Promise<{ [key: string]: W }> {
+        const transaction = this.db.transaction(WEEKS, "readonly");
+        const weeks = transaction.objectStore(WEEKS);
+
+        return new Promise((resolve, reject) => {
+            const request = weeks.getAll();
+            request.onsuccess = function (event) {
+                const resultArray = request.result as W[];
+                const resultObject = resultArray.reduce((acc, item) => {
+                    acc[item.id] = item;
+                    return acc;
+                }, {} as { [key: string]: W });
+                resolve(resultObject);
+            };
+            request.onerror = function (event) {
+                reject(event);
+            };
+        });
+    }
+
+    async updateWeek(week: W): Promise<boolean> {
+        const transaction = this.db.transaction(WEEKS, "readwrite");
+        const weeks = transaction.objectStore(WEEKS);
+
+        return new Promise((resolve, reject) => {
+            const request = weeks.put(week);
+            request.onsuccess = function () {
+                resolve(true);
+            };
+            request.onerror = function () {
+                reject(false);
+            };
+        });
+    }
+
+    async deleteWeek(weekId: string): Promise<boolean> {
+        const transaction = this.db.transaction(WEEKS, "readwrite");
+        const weeks = transaction.objectStore(WEEKS);
+
+        return new Promise((resolve, reject) => {
+            const request = weeks.delete(weekId);
+            request.onsuccess = function () {
+                resolve(true);
+            };
+            request.onerror = function (event) {
                 reject(false);
             };
         });

@@ -24,10 +24,18 @@
         const result = isNaN(parsed) ? 0 : Math.min(100, Math.max(0, parsed));
         (e.target as HTMLInputElement).value = result.toString();
         task.completionPercentage = result;
+
+        if (result === 100) {
+            task.isCompleted = true;
+        }
     }
 
     function onIsCompletedChanged(e: Event) {
         task.isCompleted = (e.target as HTMLInputElement).checked;
+
+        if (task.isCompleted) {
+            task.completionPercentage = 100;
+        }
     }
 
     function onNotesChanged(e: Event) {
@@ -40,7 +48,9 @@
             return;
         }
 
-        successHandler(task);
+        successHandler({
+            ...task,
+        });
     }
 </script>
 

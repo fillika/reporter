@@ -1,11 +1,15 @@
 export interface IDatabase<T, W> {
-    getTask(weekId: string, key: string): Promise<T | undefined>;
-    // getTasks(weekId: string): Promise<{ [key: string]: T }>;
-    saveTask(weekId: string, key: string, value: T): Promise<boolean>;
-    deleteTask(weekId: string, key: string): Promise<boolean>;
+    init(): Promise<boolean>;
 
-    getWeek(key: string): Promise<W | undefined>;
+    addTask(task: T): Promise<boolean>;
+    getTask(taskId: string): Promise<T | undefined>;
+    getTasks(weekId: string): Promise<{ [key: string]: T }>;
+    updateTask(task: T): Promise<boolean>;
+    deleteTask(taskId: string): Promise<boolean>;
+
+    addWeek(week: W): Promise<boolean>;
+    getWeek(weekId: string): Promise<W | undefined>;
     getWeeks(): Promise<{ [key: string]: W }>;
-    saveWeek(key: string, value: W): Promise<boolean>;
-    deleteWeek(key: string): Promise<boolean>;
+    updateWeek(week: W): Promise<boolean>;
+    deleteWeek(weekId: string): Promise<boolean>;
 }

@@ -1,5 +1,6 @@
 export interface Task {
     id: string;
+    weekId: string,
     title: string;
     notes: string;
     issue?: string;
@@ -18,5 +19,4 @@ export interface WeekReport {
     id: string;
     name: string;
     createdAt: number;
-    tasks: TaskCollection;
 }

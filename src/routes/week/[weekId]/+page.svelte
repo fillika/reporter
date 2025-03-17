@@ -1,22 +1,25 @@
 <script lang="ts">
     import Container from "../../../components/ui/Container.svelte";
-    import getWeek from "$lib/database/methods/getWeek";
-    import { onMount } from "svelte";
-    import type { WeekReport } from "$lib/weeksManaging/types";
+    import { getContext, onMount } from "svelte";
+    import type { Task, TaskCollection, WeekReport } from "$lib/weeksManaging/types";
     import WeekCard from "../../../components/weeks/WeekCard.svelte";
+    import type DBManager from "$lib/database/manager/manager";
 
     let { data }: { data: { weekId: string } } = $props();
     let { weekId } = data;
-    
+
+    let db: DBManager<Task, WeekReport>;
+
     let week: WeekReport | undefined = $state(undefined);
+    let tasks: TaskCollection = $state({});
 
     onMount(async () => {
-        week = await getWeek(weekId);
+        db = getContext("db");
+        week = await db.getWeek(weekId);
+        tasks = await db.getTasks(weekId);
         if (!week) {
             console.error("Week not found");
-            return;
         }
-        console.debug(week);
     });
 </script>
 
@@ -24,6 +27,6 @@
     {#if week === undefined}
         <p>Загрузка...</p>
     {:else}
-        <WeekCard report={week} />
+        <WeekCard {week} bind:tasks />
     {/if}
 </Container>

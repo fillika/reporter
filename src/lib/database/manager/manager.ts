@@ -1,7 +1,4 @@
-import type { Task, WeekReport } from "$lib/weeksManaging/types";
 import type { IDatabase } from "../storages/types";
-
-import LocalStorageDB from "../storages/localStorage";
 
 class DBManager<T, W> implements IDatabase<T, W> {
     private db: IDatabase<T, W>;
@@ -10,34 +7,49 @@ class DBManager<T, W> implements IDatabase<T, W> {
         this.db = db;
     }
 
-    async getTask(weekId: string, key: string) {
-        return this.db.getTask(weekId, key);
+    init() {
+        return this.db.init();
     }
 
-    async saveTask(weekId: string, key: string, value: T) {
-        return this.db.saveTask(weekId, key, value);
+    async addTask(task: T): Promise<boolean> {
+        return this.db.addTask(task);
     }
 
-    async deleteTask(weekId: string, key: string) {
-        return this.db.deleteTask(weekId, key);
+    async getTask(taskId: string): Promise<T | undefined> {
+        return this.db.getTask(taskId);
     }
 
-    async getWeek(key: string) {
-        return this.db.getWeek(key);
+    async getTasks(weekId: string): Promise<{ [key: string]: T }> {
+        return this.db.getTasks(weekId);
     }
 
-    async getWeeks() {
+    async updateTask(task: T): Promise<boolean> {
+        return this.db.updateTask(task);
+    }
+
+    async deleteTask(taskId: string): Promise<boolean> {
+        return this.db.deleteTask(taskId);
+    }
+
+    async addWeek(week: W): Promise<boolean> {
+        return this.db.addWeek(week);
+    }
+
+    async getWeek(weekId: string): Promise<W | undefined> {
+        return this.db.getWeek(weekId);
+    }
+
+    async getWeeks(): Promise<{ [key: string]: W }> {
         return this.db.getWeeks();
     }
 
-    async saveWeek(key: string, value: W) {
-        return this.db.saveWeek(key, value);
+    async updateWeek(week: W): Promise<boolean> {
+        return this.db.updateWeek(week);
     }
 
-    async deleteWeek(key: string) {
-        return this.db.deleteWeek(key);
+    async deleteWeek(weekId: string): Promise<boolean> {
+        return this.db.deleteWeek(weekId);
     }
 }
 
-const storage = new LocalStorageDB<Task, WeekReport>();
-export default new DBManager(storage);
+export default DBManager;

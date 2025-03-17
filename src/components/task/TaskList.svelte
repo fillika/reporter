@@ -1,18 +1,20 @@
 <script lang="ts">
-    import deleteTask from "$lib/database/methods/deleteTask";
-    import type { TaskCollection } from "$lib/weeksManaging/types";
+    import type { TaskCollection, WeekReport } from "$lib/weeksManaging/types";
+    import { getContext, onMount } from "svelte";
     import Task from "./Task.svelte";
+    import type DBManager from "$lib/database/manager/manager";
 
-    export let weekId: string;
     export let tasks: TaskCollection = {};
 
-    async function handleDeleteTask(weekId: string, taskId: string) {
+    let db: DBManager<Task, WeekReport>;
+
+    async function handleDeleteTask(taskId: string) {
         const areUSure = confirm("Вы уверены, что хотите удалить задачу?");
         if (!areUSure) {
             return false;
         }
 
-        const isDeleted = await deleteTask(weekId, taskId);
+        const isDeleted = await db.deleteTask(taskId);
         if (!isDeleted) {
             return false;
         }
@@ -20,6 +22,10 @@
         delete tasks[taskId];
         return true;
     }
+
+    onMount(() => {
+        db = getContext("db");
+    });
 </script>
 
 {#if Object.keys(tasks).length === 0}
@@ -27,7 +33,7 @@
 {:else}
     <div class="task-list">
         {#each Object.entries(tasks) as [_, task]}
-            <Task {handleDeleteTask} {weekId} {task} />
+            <Task {handleDeleteTask} {task} />
         {/each}
     </div>
 {/if}

@@ -1,16 +1,17 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import type { WeekReport } from "$lib/weeksManaging/types";
+    import type { TaskCollection, WeekReport } from "$lib/weeksManaging/types";
     import { prepareWeekReport } from "$lib/utils/weekReport";
 
-    export let weekReport: WeekReport;
+    export let week: WeekReport;
+    export let tasks: TaskCollection;
     export let onSuccess = () => {};
     export let onCancel = () => {};
 
     let textReport = "";
 
     onMount(() => {
-        textReport = prepareWeekReport(weekReport);
+        textReport = prepareWeekReport(week, tasks);
     });
 </script>
 

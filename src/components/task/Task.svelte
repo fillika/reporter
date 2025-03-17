@@ -1,13 +1,15 @@
 <script lang="ts">
-    import type { Task } from "$lib/weeksManaging/types";
+    import type { Task, WeekReport } from "$lib/weeksManaging/types";
     import Modal from "../modals/Modal.svelte";
     import EditTaskForm from "../forms/EditTaskForm.svelte";
     import Button from "../ui/Button.svelte";
-    import saveTask from "$lib/database/methods/saveTask";
+    import type DBManager from "$lib/database/manager/manager";
+    import { getContext, onMount } from "svelte";
 
     let isOpen = $state(false);
-    const { handleDeleteTask, weekId, task } = $props();
-    
+    const { handleDeleteTask, task } = $props();
+    let db: DBManager<Task, WeekReport>;
+
     function editTask(event: Event) {
         event.preventDefault();
         isOpen = true;
@@ -20,17 +22,16 @@
     }
 
     async function onSuccessEdit(data: Task) {
-        await saveTask(weekId, data);
+        await db.updateTask(data);
         isOpen = false;
     }
 
     function onCanceledEdit() {
         isOpen = false;
-        console.debug("Task editing canceled");
     }
 
     async function onDelete() {
-        const isDeleted = await handleDeleteTask(weekId, task.id);
+        const isDeleted = await handleDeleteTask(task.id);
         if (!isDeleted) {
             alert("Не удалось удалить задачу");
             return;
@@ -38,6 +39,9 @@
         isOpen = false;
     }
 
+    onMount(() => {
+        db = getContext("db");
+    });
 </script>
 
 <div class="task" onclick={editTask} onkeydown={handleKeydown} role="button" tabindex="0">
