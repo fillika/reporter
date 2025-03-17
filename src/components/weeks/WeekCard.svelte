@@ -9,11 +9,13 @@
     import NewTaskForm from "../forms/EditTaskForm.svelte";
     import { goto } from "$app/navigation";
     import generateUUID from "$lib/utils/generateUUID";
+    import ReportForm from "../forms/ReportForm.svelte";
 
     let isLoading = true;
     export let report: WeekReport;
 
     let isModalOpen = false;
+    let isReportModalOpen = false;
 
     async function createNewTask(weekId: string, data: Task) {
         const isSuccess = await saveTask(weekId, data);
@@ -34,7 +36,11 @@
     }
 
     function createReport() {
-        alert("// todo implement");
+        isReportModalOpen = true;
+    }
+
+    function closeReportModal() {
+        isReportModalOpen = false;
     }
 
     function createTask(): Task {
@@ -79,6 +85,15 @@
                 <Button text="Отмена" on:click={handleCancel} />
             </div>
         </NewTaskForm>
+    </Modal>
+
+    <Modal isOpen={isReportModalOpen} title="Отчет" closeHandler={closeReportModal}>
+        <ReportForm weekReport={report} onSuccess={closeReportModal} onCancel={closeReportModal}>
+            <div slot="action-buttons" let:handleSubmit let:handleCancel>
+                <Button text="Скопировать" on:click={handleSubmit} />
+                <Button text="Отмена" on:click={handleCancel} />
+            </div>
+        </ReportForm>
     </Modal>
 </div>
 
