@@ -90,7 +90,7 @@
     </Modal>
 
     <Modal isOpen={isReportModalOpen} title="Отчет" closeHandler={closeReportModal}>
-        <ReportForm {week} tasks={localTasks} onSuccess={closeReportModal} onCancel={closeReportModal}>
+        <ReportForm {week} tasks={localTasks} onCancel={closeReportModal}>
             <div slot="action-buttons" let:handleSubmit let:handleCancel>
                 <Button text="Скопировать" on:click={handleSubmit} />
                 <Button text="Отмена" on:click={handleCancel} />

@@ -2,13 +2,18 @@
     import { onMount } from "svelte";
     import type { TaskCollection, WeekReport } from "$lib/weeksManaging/types";
     import { prepareWeekReport } from "$lib/utils/weekReport";
+    import { copy } from "$lib/utils/clipboard";
 
     export let week: WeekReport;
     export let tasks: TaskCollection;
-    export let onSuccess = () => {};
     export let onCancel = () => {};
 
     let textReport = "";
+
+    function copyToClipboard() {
+        alert("Отчет скопирован в буфер обмена");
+        copy(textReport);
+    }
 
     onMount(() => {
         textReport = prepareWeekReport(week, tasks);
@@ -20,7 +25,7 @@
         <textarea id="report" bind:value={textReport}></textarea>
     </div>
     <div class="form-actions">
-        <slot name="action-buttons" handleSubmit={onSuccess} handleCancel={onCancel}></slot>
+        <slot name="action-buttons" handleSubmit={copyToClipboard} handleCancel={onCancel}></slot>
     </div>
 </div>
 
